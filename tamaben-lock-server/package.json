@@ -1,0 +1,13 @@
+{
+  "name": "tamaben-lock-mdm-server",
+  "version": "0.1.0",
+  "description": "TAMABEN LOCK Local Management & MDM Server",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["apple-mdm", "tamaben-lock", "ios-management"],
+  "author": "TAMABEN LOCK",
+  "license": "ISC"
+}
