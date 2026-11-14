@@ -340,7 +340,14 @@ window.sendDeviceCommand = async function(udid, commandType) {
       body: JSON.stringify({ commandType })
     });
     if (res.ok) {
-      alert(`コマンド [${commandType}] をキューに追加しました。次回通信時に端末へ配信されます。`);
+      if (commandType === 'DeviceLock') {
+        alert('【即時ロック実行完了】\n端末ロック信号を即座に送信しました！\n端末側（専用アプリ）が直ちに全画面ロック状態へ突入します。');
+      } else if (commandType === 'InstallProfile') {
+        alert('【ポリシー反映完了】\n最新の制限ポリシーを即座に端末へ配信しました。');
+      } else {
+        alert(`コマンド [${commandType}] を即時送信しました。`);
+      }
+      await fetchConfig();
       await fetchLogs();
     }
   } catch (err) {

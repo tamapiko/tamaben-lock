@@ -131,6 +131,13 @@
     viewLock.classList.remove('hidden');
 
     if (activeLock) {
+      if (activeLock.type === 'REMOTE') {
+        lockCountdown.textContent = '🔒 LOCKED';
+        lockModeLabel.textContent = '遠隔端末ロック 実行中 (Webコンソール制御)';
+        lockEndTime.textContent = '管理者解除待ち';
+        return;
+      }
+
       const endD = new Date(activeLock.endTimestamp);
       const hours = String(endD.getHours()).padStart(2, '0');
       const mins = String(endD.getMinutes()).padStart(2, '0');
@@ -203,6 +210,12 @@
       return;
     }
 
+    // 1.5 Check remote lock
+    if (activeLock && activeLock.type === 'REMOTE') {
+      lockCountdown.textContent = '🔒 LOCKED';
+      return;
+    }
+
     // 2. Check scheduled lock
     const schedResult = checkSchedule();
     if (schedResult && schedResult.isInside) {
@@ -253,6 +266,34 @@
       pinInput.value = '';
     }
   });
+
+  // --- Cloud Remote Lock Live Sync (即時遠隔ロック連動) ---
+  async function syncWithServer() {
+    if (!navigator.onLine) return;
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const config = await res.json();
+        if (config.system && config.system.isLocked) {
+          if (!activeLock || activeLock.type !== 'REMOTE') {
+            activeLock = {
+              type: 'REMOTE',
+              endTimestamp: Date.now() + 24 * 3600 * 1000
+            };
+            enterLockMode();
+          }
+        } else if (activeLock && activeLock.type === 'REMOTE') {
+          releaseLockMode();
+        }
+      }
+    } catch (e) {
+      // offline fallback
+    }
+  }
+
+  // 3秒ごとにWebコンソールからの遠隔ロック指示を常時監視（即時ロック）
+  setInterval(syncWithServer, 3000);
+  syncWithServer();
 
   // Init
   loadSavedState();

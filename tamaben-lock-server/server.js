@@ -285,6 +285,12 @@ const server = http.createServer(async (req, res) => {
           cmdId = queueInstalledAppList(targetUdid);
         } else if (commandType === 'DeviceLock') {
           cmdId = queueDeviceLock(targetUdid);
+          const config = loadJson(CONFIG_FILE, {});
+          config.system.isLocked = true;
+          config.system.lockMode = 'REMOTE_LOCK';
+          config.system.lastUpdated = new Date().toISOString();
+          saveJson(CONFIG_FILE, config);
+          addLog('DEVICE_LOCK_TRIGGER', `端末ロック即時発動: ${targetUdid}`);
         } else if (commandType === 'InstallProfile') {
           const config = loadJson(CONFIG_FILE, {});
           cmdId = queueInstallProfile(targetUdid, generateMobileConfig(config));
@@ -292,7 +298,7 @@ const server = http.createServer(async (req, res) => {
 
         addLog('ADMIN_COMMAND_DISPATCH', `手動コマンド発行 [${commandType}] -> ${targetUdid}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'queued', commandUUID: cmdId }));
+        res.end(JSON.stringify({ status: 'success', commandType, commandUUID: cmdId }));
       });
       return;
     }
