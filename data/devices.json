@@ -1,0 +1,14 @@
+{
+  "00008150-000603890263C01C": {
+    "udid": "00008150-000603890263C01C",
+    "status": "ENROLLED",
+    "topic": "com.apple.mgmt.tamaben.lock",
+    "buildVersion": "24B119",
+    "osVersion": "27.2",
+    "productName": "iPhone18,3",
+    "serialNumber": "DK4XY4XPVW",
+    "lastSeen": "2026-11-13T23:45:40.039Z",
+    "pushMagic": "09D2DFE8-FEBC-40E5-829F-62096AD76C72",
+    "token": "(Token received)"
+  }
+}
