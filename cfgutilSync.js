@@ -10,8 +10,13 @@ const CFGUTIL_PATH = '/Applications/Apple Configurator.app/Contents/MacOS/cfguti
 const PROFILE_PATH = path.join(__dirname, '..', 'TAMABEN_LOCK_完全版ベース.mobileconfig');
 const PROFILE_IDENTIFIER = 'com.tamaben.lock.profile.base';
 
-// プロファイルを直接適用 (制限開始 / 設定更新)
+// プロファイルを直接適用 (制限開始 / 設定更新 - Macローカル専用)
 export function syncProfileToConnectedDevice(config, callback) {
+  // クラウド環境（Linux等）ではスキップ
+  if (process.platform !== 'darwin' || !fs.existsSync(CFGUTIL_PATH)) {
+    if (callback) callback(false, 'Cloud environment (cfgutil not available)');
+    return;
+  }
   try {
     const xml = generateMobileConfig(config);
     fs.writeFileSync(PROFILE_PATH, xml, 'utf8');
@@ -32,8 +37,13 @@ export function syncProfileToConnectedDevice(config, callback) {
   }
 }
 
-// プロファイルを直接サイレント削除 (制限解除 / 緊急解除)
+// プロファイルを直接サイレント削除 (制限解除 / 緊急解除 - Macローカル専用)
 export function removeProfileFromConnectedDevice(callback) {
+  // クラウド環境（Linux等）ではスキップ
+  if (process.platform !== 'darwin' || !fs.existsSync(CFGUTIL_PATH)) {
+    if (callback) callback(false, 'Cloud environment (cfgutil not available)');
+    return;
+  }
   try {
     const cmd = `"${CFGUTIL_PATH}" remove-profile ${PROFILE_IDENTIFIER}`;
     exec(cmd, (err, stdout, stderr) => {
