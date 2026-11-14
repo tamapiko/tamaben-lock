@@ -271,33 +271,66 @@ async function fetchDevices() {
 function renderDevices(devices) {
   elements.devicesTableBody.innerHTML = '';
   if (!devices || devices.length === 0) {
-    elements.devicesTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">登録済みのMDM端末はありません（OTAまたはプロファイル登録待ち）</td></tr>';
+    elements.devicesTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">現在検出・登録されているデバイスはありません（待機中）</td></tr>';
     return;
   }
 
   devices.forEach(dev => {
     const tr = document.createElement('tr');
     const isEnrolled = dev.status === 'ENROLLED';
-    const lastSeenStr = dev.lastSeen ? new Date(dev.lastSeen).toLocaleTimeString() : '-';
+    const lastSeenDate = dev.lastSeen ? new Date(dev.lastSeen) : null;
+    const isOnline = lastSeenDate && (Date.now() - lastSeenDate.getTime() < 10 * 60 * 1000);
+    const lastSeenStr = lastSeenDate ? lastSeenDate.toLocaleTimeString() : '-';
+
+    const statusBadge = isOnline 
+      ? `<span class="log-action-badge" style="background: rgba(48, 209, 88, 0.2); color: #30d158; font-weight: 700;">● オンライン</span>`
+      : `<span class="log-action-badge" style="background: rgba(142, 142, 147, 0.2); color: #8e8e93;">○ 待機中</span>`;
 
     tr.innerHTML = `
-      <td><strong>${dev.productName || 'iPhone'}</strong></td>
-      <td><span class="log-action-badge" style="background: ${isEnrolled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}; color: ${isEnrolled ? '#6ee7b7' : '#fcd34d'};">${dev.status}</span></td>
-      <td style="font-family: var(--font-mono); font-size: 11px;">${dev.udid.substring(0, 16)}...</td>
-      <td>${dev.osVersion || '-'}</td>
+      <td>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 16px;">📱</span>
+          <div>
+            <div style="font-weight: 700;">${dev.productName || 'iPhone 18 pro'}</div>
+            <div style="font-size: 10px; color: var(--text-muted);">${dev.status || 'ENROLLED'}</div>
+          </div>
+        </div>
+      </td>
+      <td>${statusBadge}</td>
+      <td style="font-family: var(--font-mono); font-size: 11px;">
+        <span title="${dev.udid}">${dev.udid.substring(0, 16)}...</span>
+      </td>
+      <td><span style="font-weight: 600;">iOS ${dev.osVersion || '27.2'}</span></td>
       <td style="color: var(--text-muted); font-size: 11px;">${lastSeenStr}</td>
       <td>
-        <div style="display: flex; gap: 6px;">
-          <button class="btn btn-sm btn-secondary" onclick="sendDeviceCommand('${dev.udid}', 'DeviceInformation')">情報取得</button>
-          <button class="btn btn-sm btn-secondary" onclick="sendDeviceCommand('${dev.udid}', 'InstalledApplicationList')">アプリ一覧</button>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
           <button class="btn btn-sm btn-primary" onclick="sendDeviceCommand('${dev.udid}', 'InstallProfile')">ポリシー反映</button>
+          <button class="btn btn-sm btn-secondary" onclick="sendDeviceCommand('${dev.udid}', 'DeviceInformation')">情報取得</button>
           <button class="btn btn-sm btn-danger" onclick="sendDeviceCommand('${dev.udid}', 'DeviceLock')">端末ロック</button>
+          <button class="btn btn-sm" style="background: #2c1517; color: #ff453a; border: 1px solid #ff453a33;" onclick="deleteDevice('${dev.udid}')">削除</button>
         </div>
       </td>
     `;
     elements.devicesTableBody.appendChild(tr);
   });
 }
+
+window.deleteDevice = async function(udid) {
+  if (!confirm(`UDID [${udid}] の端末を管理対象リストから削除しますか？\n（※再登録時は再度プロファイルを開くことで自動検出されます）`)) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/devices/${udid}`, { method: 'DELETE' });
+    if (res.ok) {
+      alert('端末情報を管理対象から正常に削除しました。');
+      await fetchDevices();
+      await fetchLogs();
+    } else {
+      alert('端末の削除に失敗しました');
+    }
+  } catch (err) {
+    alert('通信エラーが発生しました');
+  }
+};
 
 window.sendDeviceCommand = async function(udid, commandType) {
   try {

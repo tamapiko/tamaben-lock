@@ -250,6 +250,25 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // 端末の削除 (管理対象から除外・クリーンアップ)
+    if (pathname.startsWith('/api/devices/') && (method === 'DELETE' || (method === 'POST' && pathname.endsWith('/delete')))) {
+      const parts = pathname.split('/');
+      const targetUdid = parts[3];
+      const devices = loadJson(DEVICES_FILE, {});
+      if (devices[targetUdid]) {
+        const devName = devices[targetUdid].productName || 'iPhone';
+        delete devices[targetUdid];
+        saveJson(DEVICES_FILE, devices);
+        addLog('DEVICE_DELETED', `端末を管理対象から削除: ${devName} (${targetUdid})`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'deleted', udid: targetUdid }));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Device not found' }));
+      }
+      return;
+    }
+
     // 端末への手動コマンド発行
     if (pathname.startsWith('/api/devices/') && pathname.endsWith('/command') && method === 'POST') {
       const parts = pathname.split('/');
