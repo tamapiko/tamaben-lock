@@ -162,8 +162,9 @@ export function generateMobileConfig(config) {
 	<string>com.tamaben.lock.profile.base</string>
 	<key>PayloadOrganization</key>
 	<string>${orgName}</string>
+	<!-- ユーザーによる手動削除を禁止（上書き更新のみ許可） -->
 	<key>PayloadRemovalDisallowed</key>
-	<${!allowProfileRemoval}/>
+	<true/>
 	<key>PayloadType</key>
 	<string>Configuration</string>
 	<key>PayloadUUID</key>

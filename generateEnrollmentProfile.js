@@ -18,8 +18,8 @@ const rootCaUUID = crypto.randomUUID().toUpperCase();
 const identityUUID = crypto.randomUUID().toUpperCase();
 const mdmPayloadUUID = crypto.randomUUID().toUpperCase();
 
-const serverUrl = 'https://look-mixture-answers-ship.trycloudflare.com/mdm/command';
-const checkInUrl = 'https://look-mixture-answers-ship.trycloudflare.com/mdm/checkin';
+const serverUrl = 'https://tamaben-lock.onrender.com/mdm/command';
+const checkInUrl = 'https://tamaben-lock.onrender.com/mdm/checkin';
 const topic = 'com.apple.mgmt.tamaben.lock';
 
 const profileXml = `<?xml version="1.0" encoding="UTF-8"?>
