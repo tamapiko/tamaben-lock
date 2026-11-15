@@ -3,9 +3,10 @@
     "name": "TAMABEN LOCK",
     "version": "0.2.0",
     "isLocked": false,
-    "lockMode": "MANUAL",
+    "lockMode": "YOUTUBE_24H",
     "syncUrl": "https://tamaben-lock.onrender.com",
-    "lastUpdated": "2026-11-14T00:03:01.485Z"
+    "lastUpdated": "2026-11-15T15:29:25.628Z",
+    "lockEndTimestamp": null
   },
   "categories": {
     "BASE": {
@@ -39,7 +40,7 @@
       "description": "アプリのインストール・削除管理、特定アプリの非表示（ホーム画面から消去）",
       "enabled": true,
       "allowAppInstallation": true,
-      "allowAppRemoval": false,
+      "allowAppRemoval": true,
       "blockedAppBundleIDs": []
     },
     "WEB": {

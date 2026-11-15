@@ -72,8 +72,21 @@ export function queueInstalledAppList(udid) {
   return enqueueCommand(udid, 'InstalledApplicationList', {});
 }
 
-export function queueDeviceLock(udid, message = 'TAMABEN LOCK 管理者によってロックされました') {
-  return enqueueCommand(udid, 'DeviceLock', {
-    Message: message
+export function queueDeviceLock(udid, message = 'TAMABEN ROCK 24時間スマホ禁止中', pin = '') {
+  const details = { Message: message };
+  if (pin) details.PIN = pin;
+  return enqueueCommand(udid, 'DeviceLock', details);
+}
+
+// 紛失モード開始 (YouTube企画・24時間完全ロック用: パスコード入力不能・画面完全固定)
+export function queueEnableLostMode(udid, message = '【YouTube企画】24時間スマホ禁止生活 実行中\n企画終了まで端末は使用できません。', footnote = 'TAMABEN ROCK デジタルデトックス') {
+  return enqueueCommand(udid, 'EnableLostMode', {
+    Message: message,
+    Footnote: footnote
   });
+}
+
+// 紛失モード解除 (企画終了後の遠隔即時復帰)
+export function queueDisableLostMode(udid) {
+  return enqueueCommand(udid, 'DisableLostMode', {});
 }

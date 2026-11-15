@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateMobileConfig } from './profileGenerator.js';
+import { generateEnrollmentXml } from './enrollGenerator.js';
+import { generateUnifiedTamabenRockProfile } from './unifiedProfileGenerator.js';
 import { parsePlist, buildPlistDict } from './plistHelper.js';
 import {
   enqueueCommand,
@@ -12,7 +14,9 @@ import {
   queueInstallProfile,
   queueRemoveProfile,
   queueInstalledAppList,
-  queueDeviceLock
+  queueDeviceLock,
+  queueEnableLostMode,
+  queueDisableLostMode
 } from './commandQueue.js';
 import { syncProfileToConnectedDevice, removeProfileFromConnectedDevice } from './cfgutilSync.js';
 
@@ -112,21 +116,18 @@ const server = http.createServer(async (req, res) => {
   // Apple MDM Protocol Endpoints
   // =================================================================
 
-  // 0. MDM Enrollment Profile Download (/enroll)
-  if (pathname === '/enroll') {
-    const enrollProfilePath = path.join(__dirname, '..', 'TAMABEN_LOCK_MDM_登録.mobileconfig');
-    fs.readFile(enrollProfilePath, (err, data) => {
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Enrollment profile not found');
-        return;
-      }
-      res.writeHead(200, {
-        'Content-Type': 'application/x-apple-aspen-config',
-        'Content-Disposition': 'inline; filename="TAMABEN_LOCK_Enroll.mobileconfig"'
-      });
-      res.end(data);
+  // 0. TAMABEN ROCK 統合プロファイル配信 (/enroll & /tamaben-rock.mobileconfig)
+  if (pathname === '/enroll' || pathname === '/tamaben-rock.mobileconfig') {
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers.host || 'tamaben-lock.onrender.com';
+    const hostUrl = `${protocol}://${host}`;
+    const xml = generateUnifiedTamabenRockProfile({ hostUrl });
+
+    res.writeHead(200, {
+      'Content-Type': 'application/x-apple-aspen-config',
+      'Content-Disposition': 'inline; filename="TAMABEN_ROCK.mobileconfig"'
     });
+    res.end(xml);
     return;
   }
 
@@ -251,6 +252,25 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // 端末の削除 (管理対象から除外・クリーンアップ)
+    if (pathname.startsWith('/api/devices/') && (method === 'DELETE' || (method === 'POST' && pathname.endsWith('/delete')))) {
+      const parts = pathname.split('/');
+      const targetUdid = parts[3];
+      const devices = loadJson(DEVICES_FILE, {});
+      if (devices[targetUdid]) {
+        const devName = devices[targetUdid].productName || 'iPhone';
+        delete devices[targetUdid];
+        saveJson(DEVICES_FILE, devices);
+        addLog('DEVICE_DELETED', `端末を管理対象から削除: ${devName} (${targetUdid})`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'deleted', udid: targetUdid }));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Device not found' }));
+      }
+      return;
+    }
+
     // 端末への手動コマンド発行
     if (pathname.startsWith('/api/devices/') && pathname.endsWith('/command') && method === 'POST') {
       const parts = pathname.split('/');
@@ -267,6 +287,29 @@ const server = http.createServer(async (req, res) => {
           cmdId = queueInstalledAppList(targetUdid);
         } else if (commandType === 'DeviceLock') {
           cmdId = queueDeviceLock(targetUdid);
+          const config = loadJson(CONFIG_FILE, {});
+          config.system.isLocked = true;
+          config.system.lockMode = 'REMOTE_LOCK';
+          config.system.lastUpdated = new Date().toISOString();
+          saveJson(CONFIG_FILE, config);
+          addLog('DEVICE_LOCK_TRIGGER', `端末ロック即時発動: ${targetUdid}`);
+        } else if (commandType === 'EnableLostMode') {
+          const { message, footnote } = JSON.parse(body || '{}');
+          cmdId = queueEnableLostMode(targetUdid, message, footnote);
+          const config = loadJson(CONFIG_FILE, {});
+          config.system.isLocked = true;
+          config.system.lockMode = 'LOST_MODE_24H';
+          config.system.lastUpdated = new Date().toISOString();
+          saveJson(CONFIG_FILE, config);
+          addLog('LOST_MODE_ENABLE', `【24時間完全ロック発動】紛失モード開始: ${targetUdid}`);
+        } else if (commandType === 'DisableLostMode') {
+          cmdId = queueDisableLostMode(targetUdid);
+          const config = loadJson(CONFIG_FILE, {});
+          config.system.isLocked = false;
+          config.system.lockMode = 'MANUAL';
+          config.system.lastUpdated = new Date().toISOString();
+          saveJson(CONFIG_FILE, config);
+          addLog('LOST_MODE_DISABLE', `【完全ロック解除】紛失モード終了: ${targetUdid}`);
         } else if (commandType === 'InstallProfile') {
           const config = loadJson(CONFIG_FILE, {});
           cmdId = queueInstallProfile(targetUdid, generateMobileConfig(config));
@@ -274,7 +317,7 @@ const server = http.createServer(async (req, res) => {
 
         addLog('ADMIN_COMMAND_DISPATCH', `手動コマンド発行 [${commandType}] -> ${targetUdid}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'queued', commandUUID: cmdId }));
+        res.end(JSON.stringify({ status: 'success', commandType, commandUUID: cmdId }));
       });
       return;
     }
@@ -342,8 +385,20 @@ const server = http.createServer(async (req, res) => {
         const params = body ? JSON.parse(body) : {};
         const config = loadJson(CONFIG_FILE, {});
         config.system.isLocked = true;
-        config.system.lockMode = params.mode || 'MANUAL';
+        config.system.lockMode = params.mode || 'YOUTUBE_24H';
+        const hours = params.durationHours || (config.system.lockMode === 'YOUTUBE_24H' ? 24 : 1);
+        config.system.lockEndTimestamp = Date.now() + hours * 3600 * 1000;
         config.system.lastUpdated = new Date().toISOString();
+
+        // MDM登録端末へLostMode/Lockを送信
+        try {
+          const devices = loadJson(DEVICES_FILE, {});
+          for (const udid of Object.keys(devices)) {
+            if (devices[udid].status === 'ENROLLED') {
+              queueEnableLostMode(udid, "【24時間スマホ封印企画 実行中】\nTAMABEN ROCK により端末をロックしています。", '090-0000-0000');
+            }
+          }
+        } catch (e) { console.error(e); }
         saveJson(CONFIG_FILE, config);
         addLog('LOCK_START', `制限開始（モード: ${config.system.lockMode}）`, params.operator || 'ADMIN');
 
@@ -365,7 +420,18 @@ const server = http.createServer(async (req, res) => {
         const releaseType = params.type || 'ADMIN';
         const config = loadJson(CONFIG_FILE, {});
         config.system.isLocked = false;
+        config.system.lockEndTimestamp = null;
         config.system.lastUpdated = new Date().toISOString();
+
+        // MDM登録端末へLostMode解除を送信
+        try {
+          const devices = loadJson(DEVICES_FILE, {});
+          for (const udid of Object.keys(devices)) {
+            if (devices[udid].status === 'ENROLLED') {
+              queueDisableLostMode(udid);
+            }
+          }
+        } catch (e) { console.error(e); }
         saveJson(CONFIG_FILE, config);
         addLog(`LOCK_RELEASE_${releaseType}`, `制限解除（種別: ${releaseType}）`, params.operator || releaseType);
 
@@ -398,17 +464,19 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // 一括プロファイルダウンロード／プレビュー
+    // 一括プロファイルダウンロード／プレビュー (TAMABEN ROCK 統合版)
     if (pathname === '/api/profile' && method === 'GET') {
-      const config = loadJson(CONFIG_FILE, {});
-      const mobileconfigXml = generateMobileConfig(config);
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers.host || 'tamaben-lock.onrender.com';
+      const hostUrl = `${protocol}://${host}`;
+      const mobileconfigXml = generateUnifiedTamabenRockProfile({ hostUrl });
       const isDownload = url.searchParams.get('download') === 'true';
 
       const headers = {
         'Content-Type': 'application/x-apple-aspen-config'
       };
       if (isDownload) {
-        headers['Content-Disposition'] = 'attachment; filename="TAMABEN_LOCK_Profile.mobileconfig"';
+        headers['Content-Disposition'] = 'inline; filename="TAMABEN_ROCK.mobileconfig"';
       }
       res.writeHead(200, headers);
       res.end(mobileconfigXml);
@@ -417,7 +485,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   // --- 静的ファイル配信 (public) ---
-  let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
+  let reqPath = pathname === '/' ? 'index.html' : pathname;
+  if (reqPath === '/app' || reqPath === '/app/') {
+    reqPath = '/app/index.html';
+  }
+  let filePath = path.join(PUBLIC_DIR, reqPath);
   const ext = path.extname(filePath);
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 

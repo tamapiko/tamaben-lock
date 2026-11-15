@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<!-- 1. Root CA Certificate -->
+		<dict>
+			<key>PayloadType</key>
+			<string>com.apple.security.root</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tamaben.rock.rootca</string>
+			<key>PayloadUUID</key>
+			<string>D8986429-756C-4CAB-9C88-8C074CD59644</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadDisplayName</key>
+			<string>TAMABEN ROCK Root CA</string>
+			<key>PayloadDescription</key>
+			<string>TAMABEN ROCK 認証局証明書</string>
+			<key>PayloadCertificateFileName</key>
+			<string>TAMABEN_ROCK_CA.crt</string>
+			<key>PayloadContent</key>
+			<data>MIIDRjCCAi6gAwIBAgIUbayK/Z7x4DCJ7dOVxhUYVkhl/z8wDQYJKoZIhvcNAQELBQAwQzELMAkGA1UEBhMCSlAxFTATBgNVBAoMDFRBTUFCRU4gTE9DSzEdMBsGA1UEAwwUVEFNQUJFTiBMT0NLIFJvb3QgQ0EwHhcNMjYxMTEzMTYzMzU1WhcNMzYxMTEwMTYzMzU1WjBDMQswCQYDVQQGEwJKUDEVMBMGA1UECgwMVEFNQUJFTiBMT0NLMR0wGwYDVQQDDBRUQU1BQkVOIExPQ0sgUm9vdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKq4tqCrp+0hD29Pap3DmrjXAEsZnCNiBIXYmHRtYD9a79PCvIF/fGoNKhg2vZTMs8S4jEYl3GPvkPpL/rV8WhPXgg0QXSIM07qs6AzJS6jHKpOQskBrhNZTAOujuqDwahILvvFhDZaMBnGKRfjHsHkwTSgOsRYw/4kTSuflPYgcmyVWdZUtpWGSJxRTLU7vBvJlKz+QtlHdN4Cn0UHNOHm4EkoYQgy7ihSXlObd6s0qZcngLz16aaB3oCPZdAA1u8ZWC+9mpVddKF2c4AlZZHfV+NVXN6I5Y3fLKxmFtyOrsJ+stFVqE7COT/v12EBe0+X4hoAlQdxJFwY6NSI5CiMCAwEAAaMyMDAwHQYDVR0OBBYEFIRJlcY1Rrl09nbS6fzF8gpB4nyDMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBACoPDaRmwdHzjVWwPHHUE+Ty0aq8iKEoYoPUqevEt6pmFc4fP5x0m4sEd3A7VJvy8D7z8qVQzBnHxe9el0Dl9qT67Kfp/vOYvflB3sIKqo/iPvucdU875Rdkt9gaO9kEHKYrAy6JTlJAwn5W4LN5HgYML1KAzDLXreCrCEy3XuKCxld/QNbuYPZ5K1CR08tqptcRjAw7wa43L0R+owdy2OPntWJxIiBupj81qc04KoXTcq9NHw+tEX1dQoqtrDAwdVA3Cy9itsXu9NGhxhZcG/DrOFjTN5mMogW/GQhKJpRCYpoynP0G2t5tAg1XPifhJ/2TK4NM2Ym9PSMx3dL0aMI=</data>
+		</dict>
+		<!-- 2. Device Identity PKCS#12 Certificate -->
+		<dict>
+			<key>PayloadType</key>
+			<string>com.apple.security.pkcs12</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tamaben.rock.identity</string>
+			<key>PayloadUUID</key>
+			<string>BB22231E-CF0E-4B10-8ECC-82CF02E4F5D1</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadDisplayName</key>
+			<string>TAMABEN ROCK Identity</string>
+			<key>PayloadDescription</key>
+			<string>TAMABEN ROCK 端末識別証明書</string>
+			<key>PayloadCertificateFileName</key>
+			<string>device.p12</string>
+			<key>Password</key>
+			<string>tamaben</string>
+			<key>PayloadContent</key>
+			<data>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</data>
+		</dict>
+		<!-- 3. Apple MDM Service Payload -->
+		<dict>
+			<key>PayloadType</key>
+			<string>com.apple.mdm</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tamaben.rock.mdm.service</string>
+			<key>PayloadUUID</key>
+			<string>3E841AD0-EB2E-4912-916A-74B5417E0D34</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadDisplayName</key>
+			<string>TAMABEN ROCK モバイルデバイス管理</string>
+			<key>PayloadDescription</key>
+			<string>TAMABEN ROCK クラウドMDM管理設定</string>
+			<key>PayloadOrganization</key>
+			<string>TAMABEN ROCK</string>
+			<key>ServerURL</key>
+			<string>https://tamaben-lock.onrender.com/mdm/command</string>
+			<key>CheckInURL</key>
+			<string>https://tamaben-lock.onrender.com/mdm/checkin</string>
+			<key>AccessRights</key>
+			<integer>8191</integer>
+			<key>CheckOutWhenRemoved</key>
+			<true/>
+			<key>IdentityCertificateUUID</key>
+			<string>BB22231E-CF0E-4B10-8ECC-82CF02E4F5D1</string>
+			<key>Topic</key>
+			<string>com.apple.mgmt.tamaben.lock</string>
+			<key>SignMessage</key>
+			<false/>
+		</dict>
+		<!-- 4. 専用ソフト WebClip -->
+		<dict>
+			<key>PayloadType</key>
+			<string>com.apple.webClip.managed</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tamaben.rock.webclip</string>
+			<key>PayloadUUID</key>
+			<string>D38AA627-686C-4B38-943C-63C1CBDB2FE6</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadDisplayName</key>
+			<string>TAMABEN ROCK 専用アプリ</string>
+			<key>PayloadDescription</key>
+			<string>TAMABEN ROCK 専用ソフト</string>
+			<key>PayloadOrganization</key>
+			<string>TAMABEN ROCK</string>
+			<key>Label</key>
+			<string>TAMABEN ROCK</string>
+			<key>URL</key>
+			<string>https://tamaben-lock.onrender.com/app/</string>
+			<key>IsRemovable</key>
+			<false/>
+			<key>FullScreen</key>
+			<true/>
+		</dict>
+	</array>
+	<key>PayloadDisplayName</key>
+	<string>TAMABEN ROCK (MDM管理完全版)</string>
+	<key>PayloadDescription</key>
+	<string>TAMABEN ROCK モバイルデバイス管理(MDM) &amp; 専用ソフト統合プロファイル</string>
+	<key>PayloadIdentifier</key>
+	<string>com.tamaben.rock.mdm.full</string>
+	<key>PayloadOrganization</key>
+	<string>TAMABEN ROCK</string>
+	<key>PayloadRemovalDisallowed</key>
+	<true/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>1BBEC583-29E2-4D37-92F2-659535CB4384</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TAMABEN ROCK">
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="/app/manifest.json">
+  <link rel="apple-touch-icon" href="/app/icon-192.png">
+  <title>TAMABEN ROCK</title>
+  <link rel="stylesheet" href="/app/app.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-box">
+        <span class="logo-icon"></span>
+        <span class="logo-title">TAMABEN ROCK</span>
+      </div>
+      <div class="status-badge" id="netStatusBadge">
+        <span class="status-dot"></span>
+        <span id="netStatusText">OFFLINE READY</span>
+      </div>
+    </header>
+
+    <!-- Main Views -->
+    <main class="main-content">
+      <!-- 1. LOCK ACTIVE VIEW (ロック中画面: ホームなし・専用画面) -->
+      <section id="viewLock" class="view-panel active-lock-view hidden">
+        <div class="lock-shield-box">
+          <div class="shield-pulse"></div>
+          <div class="shield-icon">🔒</div>
+        </div>
+        <h1 class="lock-heading">TAMABEN ROCK 集中ロック中</h1>
+        <p class="lock-subtext">外部SNS・不要アプリは遮断されています。<br>この専用画面のみが利用可能です。</p>
+
+        <!-- Countdown Display -->
+        <div class="timer-display-box">
+          <div class="timer-digits" id="lockCountdown">00:00:00</div>
+          <div class="timer-mode-label" id="lockModeLabel">時間指定制限 実行中</div>
+        </div>
+
+        <div class="lock-info-card">
+          <div class="info-row">
+            <span class="info-label">制限終了予定</span>
+            <span class="info-val" id="lockEndTime">--:--</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">制御方式</span>
+            <span class="info-val">Supervision & MDM Kiosk</span>
+          </div>
+        </div>
+
+        <!-- Emergency / Unlock Trigger -->
+        <div class="emergency-box">
+          <button class="btn-emergency" id="btnEmergencyOpen">緊急解除コード入力</button>
+        </div>
+      </section>
+
+      <!-- 2. CONTROL DASHBOARD VIEW (通常設定・時間指定画面) -->
+      <section id="viewDashboard" class="view-panel dashboard-view">
+        <div class="summary-card">
+          <div class="card-status-dot green"></div>
+          <div class="card-status-text">
+            <h2>待機中 (通常モード)</h2>
+            <p>スケジュール・タイマーに従って自動ロックが発動します</p>
+          </div>
+        </div>
+
+        <!-- Section: 時間指定での制限 (Scheduled Restriction) -->
+        <div class="config-card">
+          <div class="card-title-row">
+            <div class="title-with-icon">
+              <span class="icon">🕒</span>
+              <h3>時間指定での制限 (定期スケジュール)</h3>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="scheduleEnable">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="card-desc">指定した時間帯になるとホーム画面を遮断し、この専用アプリのみに固定します。</p>
+
+          <div class="schedule-inputs">
+            <div class="time-picker-group">
+              <label>開始時刻 (ロック開始)</label>
+              <input type="time" id="schedStartTime" value="23:00" class="input-time">
+            </div>
+            <div class="time-picker-arrow">➔</div>
+            <div class="time-picker-group">
+              <label>終了時刻 (ロック解除)</label>
+              <input type="time" id="schedEndTime" value="07:00" class="input-time">
+            </div>
+          </div>
+
+          <div class="days-selector" id="daysSelector">
+            <button class="day-chip active" data-day="1">月</button>
+            <button class="day-chip active" data-day="2">火</button>
+            <button class="day-chip active" data-day="3">水</button>
+            <button class="day-chip active" data-day="4">木</button>
+            <button class="day-chip active" data-day="5">金</button>
+            <button class="day-chip active" data-day="6">土</button>
+            <button class="day-chip active" data-day="0">日</button>
+          </div>
+        </div>
+
+        <!-- Section: 即時タイマー制限 (Countdown Restriction) -->
+        <div class="config-card">
+          <div class="card-title-row">
+            <div class="title-with-icon">
+              <span class="icon">⏳</span>
+              <h3>今すぐタイマー制限 (集中モード)</h3>
+            </div>
+          </div>
+          <p class="card-desc">今すぐ一定時間だけ完全ロックを開始します。</p>
+          
+          <div class="timer-preset-grid">
+            <button class="btn-preset" data-minutes="25">25分 (集中)</button>
+            <button class="btn-preset active" data-minutes="60">60分 (1時間)</button>
+            <button class="btn-preset" data-minutes="120">120分 (2時間)</button>
+            <button class="btn-preset" data-minutes="180">180分 (3時間)</button>
+          </div>
+
+          <button class="btn-action-primary" id="btnStartTimerLock">
+            🔒 選択時間で今すぐロック開始
+          </button>
+        </div>
+
+        <!-- Section: 統合MDMプロファイル -->
+        <div class="config-card">
+          <div class="card-title-row">
+            <div class="title-with-icon">
+              <span class="icon">🛡️</span>
+              <h3>TAMABEN ROCK 統合プロファイル</h3>
+            </div>
+          </div>
+          <p class="card-desc">全機能（MDM登録・削除不可設定・SNSアプリ非表示・Web遮断・専用ソフト固定）が1つに統合された公式プロファイルです。</p>
+          <a href="/tamaben-rock.mobileconfig" class="btn-action-secondary" id="btnDownloadProfile">
+            📥 統合プロファイルを直接ダウンロード (.mobileconfig)
+          </a>
+          <p class="profile-tip">※上書き更新対応・ユーザー手動削除不可</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Emergency PIN Modal -->
+    <div id="pinModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <h3>管理者緊急解除</h3>
+        <p>4桁の緊急解除PINコードを入力してください。</p>
+        <div class="pin-input-box">
+          <input type="password" id="pinInput" maxlength="6" placeholder="PIN入力" class="pin-field">
+        </div>
+        <div class="modal-btn-row">
+          <button class="btn-secondary" id="btnCancelPin">キャンセル</button>
+          <button class="btn-primary" id="btnConfirmPin">解除実行</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app/app.js"></script>
+</body>
+</html>

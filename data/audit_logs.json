@@ -1,5 +1,19 @@
 [
   {
+    "id": "log-1794756565629",
+    "timestamp": "2026-11-15T15:29:25.629Z",
+    "action": "LOCK_RELEASE_ADMIN",
+    "details": "制限解除（種別: ADMIN）",
+    "operator": "ADMIN"
+  },
+  {
+    "id": "log-1794756565613",
+    "timestamp": "2026-11-15T15:29:25.613Z",
+    "action": "LOCK_START",
+    "details": "制限開始（モード: YOUTUBE_24H）",
+    "operator": "ADMIN"
+  },
+  {
     "id": "log-1794614581486",
     "timestamp": "2026-11-14T00:03:01.486Z",
     "action": "CONFIG_UPDATE",
