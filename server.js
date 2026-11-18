@@ -218,6 +218,24 @@ const server = http.createServer(async (req, res) => {
             addLog('MDM_COMMAND_REPORT', `コマンド実行結果: [${cmdUUID}] -> ${status}`, 'DEVICE');
           }
 
+          // アプリ一覧レポート (InstalledApplicationList) の保存
+          if (report.InstalledApplicationList && Array.isArray(report.InstalledApplicationList)) {
+            const appsFile = path.join(__dirname, "data", `apps_${udid}.json`);
+            saveJson(appsFile, report.InstalledApplicationList);
+            addLog('APP_LIST_SYNC', `アプリ一覧取得完了: ${report.InstalledApplicationList.length}個のアプリを受信`, 'DEVICE');
+            console.log(`[MDM Apps] Saved ${report.InstalledApplicationList.length} apps for ${udid}`);
+          }
+
+          // デバイス情報レポート (QueryResponses) の保存
+          if (report.QueryResponses) {
+            const devInfo = report.QueryResponses;
+            const devices = loadJson(DEVICES_FILE, {});
+            if (devices[udid]) {
+              Object.assign(devices[udid], devInfo);
+              saveJson(DEVICES_FILE, devices);
+            }
+          }
+
           // 次の未送信コマンドがあるか確認
           const nextCmd = getNextCommand(udid);
           if (nextCmd) {
@@ -245,6 +263,17 @@ const server = http.createServer(async (req, res) => {
   // =================================================================
   if (pathname.startsWith('/api/')) {
     // 端末一覧取得
+    // 端末のアプリ一覧取得 API
+    if (pathname.startsWith('/api/devices/') && pathname.endsWith('/apps') && method === 'GET') {
+      const parts = pathname.split('/');
+      const targetUdid = parts[3];
+      const appsFile = path.join(__dirname, "data", `apps_${targetUdid}.json`);
+      const apps = loadJson(appsFile, []);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(apps));
+      return;
+    }
+
     if (pathname === '/api/devices' && method === 'GET') {
       const devices = loadJson(DEVICES_FILE, {});
       res.writeHead(200, { 'Content-Type': 'application/json' });

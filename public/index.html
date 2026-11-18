@@ -110,6 +110,28 @@
       </section>
     </main>
 
+    
+    <!-- Apps List Modal (class: apps-modal) -->
+    <div class="modal-overlay" id="appsModal">
+      <div class="modal-card" style="max-width: 750px;">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">📱</span>
+            <h3 id="appsModalTitle">インストール済みアプリ一覧 (正規MDM通信)</h3>
+          </div>
+          <button class="modal-close" id="btnCloseAppsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
+          <div id="appsListContainer" class="apps-grid">
+            <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">アプリ一覧を取得中...</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btnCloseAppsModal2">閉じる</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Profile Preview Modal -->
     <div class="modal-overlay" id="previewModal">
       <div class="modal-card">

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadDescription</key>
+			<string>TAMABEN ROCK 基本設定 (機能制限解除済み)</string>
+			<key>PayloadDisplayName</key>
+			<string>TAMABEN ROCK 設定</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tamaben.rock.restrictions</string>
+			<key>PayloadType</key>
+			<string>com.apple.applicationaccess</string>
+			<key>PayloadUUID</key>
+			<string>EA2C408D-FCE7-4CE5-98B5-0B7D74073C56</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadOrganization</key>
+			<string>TAMABEN ROCK</string>
+			
+			<key>allowAppInstallation</key>
+			<true/>
+			<key>allowAppRemoval</key>
+			<true/>
+			<key>allowPasscodeModification</key>
+			<true/>
+			<key>allowBluetoothModification</key>
+			<true/>
+			<key>allowCamera</key>
+			<true/>
+			<key>allowAirDrop</key>
+			<true/>
+		</dict>
+
+		<dict>
+			<key>PayloadDescription</key>
+			<string>TAMABEN ROCK 専用ソフト (ローカル・オフライン対応)</string>
+			<key>PayloadDisplayName</key>
+			<string>TAMABEN ROCK 専用アプリ</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tamaben.rock.webclip</string>
+			<key>PayloadType</key>
+			<string>com.apple.webClip.managed</string>
+			<key>PayloadUUID</key>
+			<string>B7A138C2-D1DE-4AA7-B302-2120CB19D1B8</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadOrganization</key>
+			<string>TAMABEN ROCK</string>
+			<key>Label</key>
+			<string>TAMABEN ROCK</string>
+			<key>URL</key>
+			<string>https://tamaben-lock.onrender.com/app/</string>
+			<key>IsRemovable</key>
+			<false/>
+			<key>FullScreen</key>
+			<true/>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>TAMABEN ROCK 統合構成プロファイル (AirDrop・アプリ制限解除済み)</string>
+	<key>PayloadDisplayName</key>
+	<string>TAMABEN ROCK</string>
+	<key>PayloadIdentifier</key>
+	<string>com.tamaben.rock.unified</string>
+	<key>PayloadOrganization</key>
+	<string>TAMABEN ROCK</string>
+	<!-- ユーザーによる手動削除を完全禁止（上書き更新のみ許可） -->
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>0F192742-80C9-41FC-B7CE-77EC6C45956C</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>

@@ -109,8 +109,6 @@
 	<string>com.tamaben.rock.mdm.full</string>
 	<key>PayloadOrganization</key>
 	<string>TAMABEN ROCK</string>
-	<key>PayloadRemovalDisallowed</key>
-	<true/>
 	<key>PayloadType</key>
 	<string>Configuration</string>
 	<key>PayloadUUID</key>

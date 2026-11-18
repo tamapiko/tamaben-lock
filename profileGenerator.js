@@ -12,6 +12,54 @@ export function generateMobileConfig(config) {
   const isHomeEnabled = cats.HOME?.enabled;
 
   const payloads = [];
+  // ==========================================
+  // 0. Single App Mode (com.apple.app.lock) - 24時間企画ロック用
+  // ==========================================
+  const isLocked = config.system?.isLocked;
+  const isYoutubeMode = config.system?.lockMode === "YOUTUBE_24H" || isLocked;
+
+  if (isLocked) {
+    const appLockUUID = crypto.randomUUID().toUpperCase();
+    payloads.push(`
+		<!-- 0. 単一アプリ封印ロック (専用アプリ以外一切使用不可) -->
+		<dict>
+			<key>PayloadDescription</key>
+			<string>TAMABEN LOCK 24時間封印 単一アプリモード</string>
+			<key>PayloadDisplayName</key>
+			<string>TAMABEN LOCK 単一アプリ封印</string>
+			<key>PayloadIdentifier</key>
+			<string>com.tamaben.lock.applock</string>
+			<key>PayloadType</key>
+			<string>com.apple.app.lock</string>
+			<key>PayloadUUID</key>
+			<string>${appLockUUID}</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadOrganization</key>
+			<string>${orgName}</string>
+			<key>App</key>
+			<dict>
+				<key>Identifier</key>
+				<string>com.tamaben.lock.app</string>
+				<key>Options</key>
+				<dict>
+					<key>DisableTouch</key>
+					<false/>
+					<key>DisableDeviceRotation</key>
+					<false/>
+					<key>DisableVolumeButtons</key>
+					<false/>
+					<key>DisableRingerSwitch</key>
+					<false/>
+					<key>DisableSleepWakeButton</key>
+					<false/>
+					<key>DisableAutoLock</key>
+					<false/>
+				</dict>
+			</dict>
+		</dict>`);
+  }
+
 
   // ==========================================
   // 1. Restrictions Payload (com.apple.applicationaccess)
@@ -29,6 +77,17 @@ export function generateMobileConfig(config) {
   const allowAirDrop = isSecEnabled ? (cats.SECURITY.allowAirDrop !== false) : true;
 
   // 指定アプリ非表示（ブラックリスト: 監視対象専用）
+  let whitelistedAppsXml = '';
+  if (isLocked) {
+    // ロック中は専用アプリ（および緊急電話）以外すべてのアプリをOSレベルで完全非表示・使用不可にする！
+    whitelistedAppsXml = `
+			<key>whitelistedAppBundleIDs</key>
+			<array>
+				<string>com.tamaben.lock.app</string>
+				<string>com.apple.mobilephone</string>
+			</array>`;
+  }
+
   let blacklistedAppsXml = '';
   const blacklistedApps = (isAppEnabled && cats.APPLICATION.blockedAppBundleIDs) || [];
   if (blacklistedApps.length > 0) {
@@ -70,7 +129,7 @@ export function generateMobileConfig(config) {
 			<key>allowCamera</key>
 			<${allowCamera}/>
 			<key>allowAirDrop</key>
-			<${allowAirDrop}/>${blacklistedAppsXml}
+			<${allowAirDrop}/>${whitelistedAppsXml}${blacklistedAppsXml}
 		</dict>`);
 
   // ==========================================

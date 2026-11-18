@@ -307,6 +307,7 @@ function renderDevices(devices) {
           <button class="btn btn-sm btn-danger" style="font-weight: 700; background: linear-gradient(135deg, #ff453a 0%, #a80000 100%);" onclick="sendDeviceCommand('${dev.udid}', 'EnableLostMode')">🔒 24H企画ロック</button>
           <button class="btn btn-sm btn-ghost" onclick="sendDeviceCommand('${dev.udid}', 'DisableLostMode')">🔓 企画解除</button>
           <button class="btn btn-sm btn-primary" onclick="sendDeviceCommand('${dev.udid}', 'InstallProfile')">ポリシー反映</button>
+          <button class="btn btn-sm btn-outline" style="border-color: #38bdf8; color: #38bdf8;" onclick="showInstalledApps('${dev.udid}')">📱 アプリ一覧</button>
           <button class="btn btn-sm btn-secondary" onclick="sendDeviceCommand('${dev.udid}', 'DeviceInformation')">情報取得</button>
           <button class="btn btn-sm" style="background: #2c1517; color: #ff453a; border: 1px solid #ff453a33;" onclick="deleteDevice('${dev.udid}')">削除</button>
         </div>
@@ -375,3 +376,63 @@ fetchConfig();
 fetchLogs();
 fetchDevices();
 
+
+
+// --- アプリ一覧表示 (正規MDM通信) ---
+window.showInstalledApps = async function(udid) {
+  const modal = document.getElementById('appsModal');
+  const container = document.getElementById('appsListContainer');
+  modal.classList.add('active');
+  container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 0;">正規MDM経由でアプリ一覧を取得中...</div>';
+
+  try {
+    let res = await fetch(`${API_BASE}/devices/${udid}/apps`);
+    let apps = await res.json();
+
+    if (!apps || apps.length === 0) {
+      await fetch(`${API_BASE}/commands`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ udid, command: 'InstalledApplicationList' })
+      });
+      container.innerHTML = `
+        <div style="text-align: center; padding: 30px; grid-column: 1 / -1;">
+          <div style="font-size: 28px; margin-bottom: 12px;">📡</div>
+          <div style="font-weight: 700; color: #fff; margin-bottom: 6px;">正規MDMコマンド [InstalledApplicationList] をiPhoneへ発行しました</div>
+          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">端末が通信時にインストール済みアプリの一覧を返送します。</div>
+          <button class="btn btn-sm btn-primary" style="margin-top: 14px;" onclick="showInstalledApps('${udid}')">アプリ一覧を再読込</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    apps.forEach(app => {
+      const card = document.createElement('div');
+      card.className = 'app-card';
+      const name = app.Name || app.Identifier || '不明なアプリ';
+      const bundleId = app.Identifier || '';
+      const version = app.Version || '';
+
+      card.innerHTML = `
+        <div class="app-icon-box">📦</div>
+        <div class="app-info">
+          <span class="app-name" title="${name}">${name}</span>
+          <span class="app-bundle-id" title="${bundleId}">${bundleId}</span>
+          ${version ? `<span class="app-version">v${version}</span>` : ''}
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+  } catch (err) {
+    container.innerHTML = `<div style="color: #ff453a; padding: 20px; text-align: center;">取得エラー: ${err.message}</div>`;
+  }
+};
+
+document.getElementById('btnCloseAppsModal')?.addEventListener('click', () => {
+  document.getElementById('appsModal')?.classList.remove('active');
+});
+document.getElementById('btnCloseAppsModal2')?.addEventListener('click', () => {
+  document.getElementById('appsModal')?.classList.remove('active');
+});
