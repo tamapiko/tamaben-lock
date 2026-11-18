@@ -263,6 +263,50 @@ const server = http.createServer(async (req, res) => {
   // =================================================================
   if (pathname.startsWith('/api/')) {
     // 端末一覧取得
+    // 1分ごとのスマホ ⇄ サーバー MDM定期連携通信 (Heartbeat & Command Polling)
+    if (pathname === "/api/heartbeat" && method === "POST") {
+      let body = "";
+      req.on("data", chunk => body += chunk);
+      req.on("end", () => {
+        try {
+          const data = body ? JSON.parse(body) : {};
+          const udid = data.udid || "00008150-000603890263C01C";
+          const devices = loadJson(DEVICES_FILE, {});
+
+          if (!devices[udid]) {
+            devices[udid] = { udid, status: "ENROLLED" };
+          }
+
+          // 1分ごとの端末ステータス更新
+          devices[udid].lastSeen = new Date().toISOString();
+          if (data.battery !== undefined) devices[udid].batteryLevel = data.battery;
+          if (data.isLocked !== undefined) devices[udid].clientIsLocked = data.isLocked;
+          if (data.osVersion) devices[udid].osVersion = data.osVersion;
+          saveJson(DEVICES_FILE, devices);
+
+          // 待機中のMDMコマンドがあるか確認
+          const nextCmd = getNextCommand(udid);
+          const config = loadJson(CONFIG_FILE, {});
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            status: "success",
+            intervalSeconds: 60, // 1分周期
+            serverIsLocked: config.system?.isLocked || false,
+            lockMode: config.system?.lockMode || "MANUAL",
+            lockEndTimestamp: config.system?.lockEndTimestamp || null,
+            pendingCommand: nextCmd ? nextCmd.Command : null
+          }));
+
+          console.log(`[1分MDM定期通信] UDID: ${udid.substring(0, 8)}... (最終通信を更新)`);
+        } catch (e) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+      return;
+    }
+
     // 端末のアプリ一覧取得 API
     if (pathname.startsWith('/api/devices/') && pathname.endsWith('/apps') && method === 'GET') {
       const parts = pathname.split('/');

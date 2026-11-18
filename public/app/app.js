@@ -320,8 +320,88 @@
     }
   }
 
-  // 1.5秒ごとにWebコンソールからの遠隔ロック指示を常時監視（即時ロック）
-  setInterval(syncWithServer, 1500);
+
+  // ========================================================
+  // 1分ごとのスマホ ⇄ サーバー MDM定期連携通信 (Heartbeat)
+  // ========================================================
+  let syncCountdownSec = 60;
+
+  async function perform1MinMdmSync() {
+    if (!navigator.onLine) {
+      if (netStatusText) netStatusText.textContent = "OFFLINE READY (ローカル自立)";
+      return;
+    }
+
+    try {
+      let batteryLevel = 1.0;
+      if (navigator.getBattery) {
+        const b = await navigator.getBattery();
+        batteryLevel = b.level;
+      }
+
+      const payload = {
+        udid: "00008150-000603890263C01C",
+        isLocked: activeLock !== null,
+        battery: Math.round(batteryLevel * 100),
+        osVersion: "27.2",
+        timestamp: Date.now()
+      };
+
+      const res = await fetch("/api/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        syncCountdownSec = data.intervalSeconds || 60;
+        if (netStatusText) {
+          netStatusText.textContent = "● 1分定期MDM連携中";
+        }
+
+        // サーバー側でロック指示が出ている場合
+        if (data.serverIsLocked) {
+          const isYouTube = data.lockMode === "YOUTUBE_24H";
+          const endTs = data.lockEndTimestamp || (Date.now() + 24 * 3600 * 1000);
+
+          if (!activeLock || activeLock.type !== "REMOTE") {
+            activeLock = {
+              type: "REMOTE",
+              isYouTube,
+              endTimestamp: endTs
+            };
+            enterLockMode();
+          }
+        } else if (activeLock && activeLock.type === "REMOTE") {
+          releaseLockMode();
+        }
+      }
+    } catch (e) {
+      console.log("[1分MDM同期待機]", e.message);
+    }
+  }
+
+  // 1分 (60秒) ごとの定期連携タイマー
+  setInterval(perform1MinMdmSync, 60000);
+
+  // 毎秒のカウントダウン表示更新
+  setInterval(() => {
+    if (syncCountdownSec > 0) syncCountdownSec--;
+    if (netStatusText && navigator.onLine) {
+      netStatusText.textContent = `● MDM連携中 (次回: ${syncCountdownSec}s)`;
+    }
+  }, 1000);
+
+  // 画面復帰時・ネットワーク復帰時にも即座に連携通信
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") perform1MinMdmSync();
+  });
+  window.addEventListener("online", perform1MinMdmSync);
+
+  // 初回即時実行
+  perform1MinMdmSync();
+
   syncWithServer();
 
   // Init

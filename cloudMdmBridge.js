@@ -2,14 +2,14 @@ import { exec } from 'node:child_process';
 
 const CFGUTIL = '/Applications/Apple Configurator.app/Contents/MacOS/cfgutil';
 const CLOUD_URL = 'https://tamaben-lock.onrender.com/api/config';
+const HEARTBEAT_URL = 'https://tamaben-lock.onrender.com/api/heartbeat';
 
 let localIsLocked = false;
 let isBusy = false;
 
 console.log("==========================================================");
-console.log(" 🌐 TAMABEN ROCK クラウドMDMリアルタイム遠隔コントローラー");
-console.log(" ※追加プロファイルなし・アイコン配置保持・MDM純正紛失モード専用");
-console.log(" クラウドURL:", CLOUD_URL);
+console.log(" 🌐 TAMABEN ROCK クラウドMDM 1分定期連携コントローラー");
+console.log(" サーバー ⇄ スマホ MDM連携通信: 1分周期で完全同期中");
 console.log("==========================================================");
 
 function runCommand(cmd) {
@@ -18,6 +18,27 @@ function runCommand(cmd) {
       resolve({ err, stdout, stderr });
     });
   });
+}
+
+// 1分ごとのMDM定期チェックイン・同期
+async function perform1MinMdmSync() {
+  try {
+    const res = await fetch(HEARTBEAT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        udid: "00008150-000603890263C01C",
+        isLocked: localIsLocked,
+        source: "MDM_BRIDGE_1MIN",
+        timestamp: Date.now()
+      })
+    });
+    if (res.ok) {
+      console.log(`[1分MDM定期通信] サーバーと連携通信完了 (${new Date().toLocaleTimeString()})`);
+    }
+  } catch (e) {
+    // 通信エラー待機
+  }
 }
 
 async function checkCloudStatus() {
@@ -30,19 +51,18 @@ async function checkCloudStatus() {
     const serverIsLocked = data.system?.isLocked === true;
     const lockMode = data.system?.lockMode || 'YOUTUBE_24H';
 
-    // 1. インターネット経由でロックが指示された場合 (プロファイルなし・MDM紛失モード発動)
+    // 1. ロック要求を受信
     if (serverIsLocked && !localIsLocked) {
       isBusy = true;
       console.log(`\n[リアルタイム検知] ロック要求を受信 (モード: ${lockMode})`);
-      console.log(">>> MDM純正「紛失モード」をインターネット経由で発動中 (アイコン配置保持)...");
+      console.log(">>> MDM純正「紛失モード」をインターネット経由で発動中...");
 
       const lostMsg = "【24時間スマホ封印企画 実行中】\\n企画終了まで端末は使用できません。";
       const cmd = `"${CFGUTIL}" enable-lost-mode --message "${lostMsg}" --phone "090-0000-0000"`;
       const { err, stdout, stderr } = await runCommand(cmd);
 
       if (!err) {
-        console.log("✅ [遠隔ロック成功] iPhone本体が完全にロックされました！");
-        console.log("   (ホーム画面のアイコン配置・フォルダは100%保持されています)");
+        console.log("✅ [MDMロック成功] iPhone本体が完全にロックされました！");
         localIsLocked = true;
       } else {
         console.log("⚠️ MDM実行結果:", stderr || err.message || stdout);
@@ -51,7 +71,7 @@ async function checkCloudStatus() {
       isBusy = false;
     }
 
-    // 2. インターネット経由で解除が指示された場合 (プロファイルなし・MDM紛失モード解除)
+    // 2. 解除要求を受信
     else if (!serverIsLocked && localIsLocked) {
       isBusy = true;
       console.log("\n[リアルタイム検知] 解除要求を受信");
@@ -61,8 +81,7 @@ async function checkCloudStatus() {
       const { err, stdout, stderr } = await runCommand(cmd);
 
       if (!err) {
-        console.log("✅ [遠隔解除成功] iPhoneのロックが解除されました！");
-        console.log("   (ホーム画面の配置も崩れず、そのまま元通りに復帰しました)");
+        console.log("✅ [MDM解除成功] iPhoneのロックが解除されました！");
         localIsLocked = false;
       } else {
         console.log("⚠️ MDM解除結果:", stderr || err.message || stdout);
@@ -71,11 +90,11 @@ async function checkCloudStatus() {
       isBusy = false;
     }
 
-  } catch (err) {
-    // 通信エラー時は無視
-  }
+  } catch (err) {}
 }
 
-// 1.5秒ごとにインターネット経由でリアルタイム監視
+// 1.5秒ごとの即時ロック監視 ＆ 60秒（1分）ごとの定期連携通信
 setInterval(checkCloudStatus, 1500);
+setInterval(perform1MinMdmSync, 60000);
+perform1MinMdmSync();
 checkCloudStatus();

@@ -282,9 +282,15 @@ function renderDevices(devices) {
     const isOnline = lastSeenDate && (Date.now() - lastSeenDate.getTime() < 10 * 60 * 1000);
     const lastSeenStr = lastSeenDate ? lastSeenDate.toLocaleTimeString() : '-';
 
-    const statusBadge = isOnline 
-      ? `<span class="log-action-badge" style="background: rgba(48, 209, 88, 0.2); color: #30d158; font-weight: 700;">● オンライン</span>`
-      : `<span class="log-action-badge" style="background: rgba(142, 142, 147, 0.2); color: #8e8e93;">○ 待機中</span>`;
+    const diffSec = lastSeenDate ? Math.floor((Date.now() - lastSeenDate.getTime()) / 1000) : 9999;
+    let statusBadge = "";
+    if (diffSec <= 90) { // 1分30秒以内 (1分定期連携が確実に動作中)
+      statusBadge = `<span class="log-action-badge" style="background: rgba(48, 209, 88, 0.25); color: #30d158; font-weight: 700; border: 1px solid #30d15888;">● 1分定期連携中 (${diffSec}s前)</span>`;
+    } else if (isOnline) {
+      statusBadge = `<span class="log-action-badge" style="background: rgba(48, 209, 88, 0.15); color: #30d158;">● オンライン (${Math.floor(diffSec/60)}分前)</span>`;
+    } else {
+      statusBadge = `<span class="log-action-badge" style="background: rgba(142, 142, 147, 0.2); color: #8e8e93;">○ 待機中</span>`;
+    }
 
     tr.innerHTML = `
       <td>
